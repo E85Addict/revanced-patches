@@ -12,6 +12,23 @@
 ### Features
 
 * **IconPackStudio - Unlock pro:** Constrain to last working version ([#3410](https://github.com/E85Addict/revanced-patches/issues/3410)) ([fb6ee8a](https://github.com/E85Addict/revanced-patches/commit/fb6ee8a8976b64477171f70229e161188c39efcd))
+* **Tiktok - ClearMode:** Retain the clear mode configurations ([813f5ae](https://github.com/E85Addict/revanced-patches/commit/813f5aecf80dbeb4b6896898fa70c8ca47413985))
+* **Tiktok - Playback speed:** Remember playback speed ([0ac949a](https://github.com/E85Addict/revanced-patches/commit/0ac949ae23cacbcb4c0fbdc0d767fb96c1672fef))
+
+# [3.1.0-dev.1](https://github.com/E85Addict/revanced-patches/compare/v3.0.1...v3.1.0-dev.1) (2023-12-18)
+
+
+### Bug Fixes
+
+* **Boost for Reddit - Spoof client:** Fix account login by removing user agent patch ([42a5de9](https://github.com/E85Addict/revanced-patches/commit/42a5de98becee7fc027c3e7143e071a3447f7077))
+* Solve build errors by using correct syntax ([3f5a5bf](https://github.com/E85Addict/revanced-patches/commit/3f5a5bf2ab061e7be2f430dc3f5fd64d5c842677))
+* **Sync for Reddit - Spoof client:** Fix account login by removing user agent patch ([d90786e](https://github.com/E85Addict/revanced-patches/commit/d90786e26d9c0e581284aab0d9d6d5097da2bfda))
+* **YouTube - SponsorBlock:** Export local statistics with saved settings ([f8365b4](https://github.com/E85Addict/revanced-patches/commit/f8365b4e3585328506887022ac6168045ac110b9))
+
+
+### Features
+
+* **IconPackStudio - Unlock pro:** Constrain to last working version ([#3410](https://github.com/E85Addict/revanced-patches/issues/3410)) ([fb6ee8a](https://github.com/E85Addict/revanced-patches/commit/fb6ee8a8976b64477171f70229e161188c39efcd))
 
 # [3.1.0](https://github.com/ReVanced/revanced-patches/compare/v3.0.1...v3.1.0) (2023-12-12)
 
