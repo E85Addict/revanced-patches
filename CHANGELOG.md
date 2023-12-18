@@ -1,3 +1,16 @@
+# [3.2.0-dev.1](https://github.com/E85Addict/revanced-patches/compare/v3.1.0...v3.2.0-dev.1) (2023-12-18)
+
+
+### Bug Fixes
+
+* **YouTube - SponsorBlock:** Export local statistics with saved settings ([f8365b4](https://github.com/E85Addict/revanced-patches/commit/f8365b4e3585328506887022ac6168045ac110b9))
+
+
+### Features
+
+* **Tiktok - ClearMode:** Retain the clear mode configuration ([1ac6bbd](https://github.com/E85Addict/revanced-patches/commit/1ac6bbd71ab911c5c003f1713c48d043e7f790e5))
+* **Tiktok - Playback speed:** Remember playback speed ([586b060](https://github.com/E85Addict/revanced-patches/commit/586b0605a3dfb83f1ab56a2129c3ab22317508e4))
+
 # [3.1.0](https://github.com/ReVanced/revanced-patches/compare/v3.0.1...v3.1.0) (2023-12-12)
 
 
