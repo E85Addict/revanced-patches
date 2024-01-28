@@ -1,3 +1,13 @@
+## [4.0.1-dev.1](https://github.com/E85Addict/revanced-patches/compare/v4.0.0...v4.0.1-dev.1) (2024-01-28)
+
+
+### Bug Fixes
+
+* Indent patch option description correctly ([bd86ef6](https://github.com/E85Addict/revanced-patches/commit/bd86ef6fc2344fa049077e9aa4bcd5d7ffa4c7f9))
+* Only set Android key if not null to prevent build errors ([1181b0b](https://github.com/E85Addict/revanced-patches/commit/1181b0bca24c524c376f7ea26ae02ee771645e6b))
+* **Twitch:** Correct patch resources to fix build ([1b63898](https://github.com/E85Addict/revanced-patches/commit/1b63898413b24693b0b737df29adcf9142963dfa))
+* **YouTube:** Do not crash on startup for root installs ([4cd51eb](https://github.com/E85Addict/revanced-patches/commit/4cd51eb2cf78af2fea62f1e209349ace99b7a6bc))
+
 ## [4.0.2-dev.1](https://github.com/ReVanced/revanced-patches/compare/v4.0.1...v4.0.2-dev.1) (2024-01-27)
 
 
