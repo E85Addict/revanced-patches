@@ -373,6 +373,12 @@ public final class app/revanced/patches/music/interaction/permanentshuffle/Perma
 	public synthetic fun execute (Lapp/revanced/patcher/data/Context;)V
 }
 
+public final class app/revanced/patches/music/layout/branding/CustomBrandingMusicPatch : app/revanced/patcher/patch/ResourcePatch {
+	public static final field INSTANCE Lapp/revanced/patches/music/layout/branding/CustomBrandingMusicPatch;
+	public synthetic fun execute (Lapp/revanced/patcher/data/Context;)V
+	public fun execute (Lapp/revanced/patcher/data/ResourceContext;)V
+}
+
 public final class app/revanced/patches/music/layout/compactheader/CompactHeaderPatch : app/revanced/patcher/patch/BytecodePatch {
 	public static final field INSTANCE Lapp/revanced/patches/music/layout/compactheader/CompactHeaderPatch;
 	public fun execute (Lapp/revanced/patcher/data/BytecodeContext;)V
