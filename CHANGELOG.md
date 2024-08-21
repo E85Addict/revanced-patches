@@ -1,3 +1,16 @@
+# [4.14.0-dev.1](https://github.com/E85Addict/revanced-patches/compare/v4.13.3...v4.14.0-dev.1) (2024-08-21)
+
+
+### Bug Fixes
+
+* **SwissID:** Rename `Remove Google Play Integrity Integrity check` to `Remove Google Play Integrity check` ([#3558](https://github.com/E85Addict/revanced-patches/issues/3558)) ([0f5a771](https://github.com/E85Addict/revanced-patches/commit/0f5a771a5cff5684b4a8fd317f4938fe2cf3cbbe))
+* **YouTube - SponsorBlock:** Handle if the user enters an invalid number into any SB settings ([37b3dd1](https://github.com/E85Addict/revanced-patches/commit/37b3dd1e789f8bb16fa1b9dd582e39c89dbe730c))
+
+
+### Features
+
+* Add support for (5) recent versions of 7.08, 7.10, 7.11, 7.13, and 7.14 ([f800bf7](https://github.com/E85Addict/revanced-patches/commit/f800bf71689d2f2d3b81768437b0dec1a022bbe2))
+
 ## [4.13.4-dev.2](https://github.com/ReVanced/revanced-patches/compare/v4.13.4-dev.1...v4.13.4-dev.2) (2024-08-20)
 
 
