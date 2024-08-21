@@ -1,3 +1,15 @@
+## [4.13.3](https://github.com/E85Addict/revanced-patches/compare/v4.13.2...v4.13.3) (2024-08-21)
+
+
+### Bug Fixes
+
+* **YouTube:** Remove translated string that breaks patching ([a48c2db](https://github.com/E85Addict/revanced-patches/commit/a48c2db53d84767c8fd5d569f9ce1c46c2bfd9a1))
+
+
+### Performance Improvements
+
+* Personal Logo && Add upstream sync ([1eb8342](https://github.com/E85Addict/revanced-patches/commit/1eb8342c9ecbd25e97e375ec1d56261cab6eae08))
+
 ## [4.13.3](https://github.com/ReVanced/revanced-patches/compare/v4.13.2...v4.13.3) (2024-08-15)
 
 
