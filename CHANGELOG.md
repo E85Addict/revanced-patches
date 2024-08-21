@@ -1,3 +1,15 @@
+# [4.14.0-dev.1](https://github.com/E85Addict/revanced-patches/compare/v4.13.3...v4.14.0-dev.1) (2024-08-21)
+
+
+### Features
+
+* Add support for (5) recent versions of 7.08, 7.10, 7.11, 7.13, and 7.14 ([e4ef7cf](https://github.com/E85Addict/revanced-patches/commit/e4ef7cfca98e27e6e9eedbd7b77ecb375497512d))
+
+
+### Performance Improvements
+
+* Personal Logo && Add upstream sync ([1eb8342](https://github.com/E85Addict/revanced-patches/commit/1eb8342c9ecbd25e97e375ec1d56261cab6eae08))
+
 ## [4.13.3](https://github.com/E85Addict/revanced-patches/compare/v4.13.2...v4.13.3) (2024-08-21)
 
 
