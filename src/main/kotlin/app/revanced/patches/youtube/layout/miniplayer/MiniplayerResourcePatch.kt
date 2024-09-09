@@ -5,8 +5,9 @@ import app.revanced.patcher.patch.PatchException
 import app.revanced.patcher.patch.ResourcePatch
 import app.revanced.patcher.patch.annotation.Patch
 import app.revanced.patches.shared.misc.mapping.ResourceMappingPatch
+import app.revanced.patches.shared.misc.playservice.YouTubeVersionCheck
 
-@Patch(dependencies = [ResourceMappingPatch::class])
+@Patch(dependencies = [ResourceMappingPatch::class, YouTubeVersionCheck::class])
 internal object MiniplayerResourcePatch : ResourcePatch() {
     var floatyBarButtonTopMargin = -1L
 
@@ -26,14 +27,12 @@ internal object MiniplayerResourcePatch : ResourcePatch() {
             "floaty_bar_button_top_margin"
         ]
 
-        try {
+        // Only required for 19.16
+        if (YouTubeVersionCheck.is_19_16_or_greater && !YouTubeVersionCheck.is_19_17_or_greater) {
             ytOutlinePictureInPictureWhite24 = ResourceMappingPatch[
                 "drawable",
                 "yt_outline_picture_in_picture_white_24"
             ]
-        } catch (exception: PatchException) {
-            // Ignore, and assume the app is 19.14 or earlier.
-            return
         }
 
         ytOutlineXWhite24 = ResourceMappingPatch[
@@ -46,10 +45,15 @@ internal object MiniplayerResourcePatch : ResourcePatch() {
             "scrim_overlay"
         ]
 
-        modernMiniplayerClose = ResourceMappingPatch[
-            "id",
-            "modern_miniplayer_close"
-        ]
+        try {
+            modernMiniplayerClose = ResourceMappingPatch[
+                "id",
+                "modern_miniplayer_close"
+            ]
+        } catch (exception: PatchException) {
+            // Ignore, and assume the app is 19.14 or earlier.
+            return
+        }
 
         modernMiniplayerExpand = ResourceMappingPatch[
             "id",

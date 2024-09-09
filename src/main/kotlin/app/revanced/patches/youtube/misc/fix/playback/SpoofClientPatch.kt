@@ -75,6 +75,19 @@ import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
                 "19.14.43",
                 "19.15.36",
                 "19.16.39",
+                "19.17.41",
+                "19.18.41",
+                "19.19.39",
+                "19.20.35",
+                "19.21.40",
+                "19.22.43",
+                "19.23.40",
+                "19.24.45",
+                "19.25.37", 
+                "19.26.42",
+                "19.28.42",
+                "19.29.42",
+                "19.30.39",
             ],
         ),
     ],
@@ -112,6 +125,11 @@ object SpoofClientPatch : BytecodePatch(
         "Lorg/chromium/net/ExperimentalUrlRequest\$Builder;"
 
     override fun execute(context: BytecodeContext) {
+        // FIXME: this patch is not updated to support 19.31 and does not work
+        // and this will soon be replaced with stream replacing.
+        println("FIXME: skipping 'Spoof client'")
+        if (true) return
+
         AddResourcesPatch(this::class)
 
         SettingsPatch.PreferenceScreen.MISC.addPreferences(

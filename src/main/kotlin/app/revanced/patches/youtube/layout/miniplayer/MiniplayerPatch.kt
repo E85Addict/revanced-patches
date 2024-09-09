@@ -6,12 +6,15 @@ import app.revanced.patcher.extensions.InstructionExtensions.addInstructions
 import app.revanced.patcher.extensions.InstructionExtensions.getInstruction
 import app.revanced.patcher.extensions.InstructionExtensions.removeInstruction
 import app.revanced.patcher.extensions.InstructionExtensions.replaceInstruction
+import app.revanced.patcher.fingerprint.MethodFingerprint
 import app.revanced.patcher.patch.BytecodePatch
 import app.revanced.patcher.patch.annotation.CompatiblePackage
 import app.revanced.patcher.patch.annotation.Patch
 import app.revanced.patcher.util.proxy.mutableTypes.MutableMethod
 import app.revanced.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
 import app.revanced.patches.all.misc.resources.AddResourcesPatch
+import app.revanced.patches.shared.misc.playservice.YouTubeVersionCheck
+import app.revanced.patches.shared.misc.settings.preference.BasePreference
 import app.revanced.patches.shared.misc.settings.preference.InputType
 import app.revanced.patches.shared.misc.settings.preference.ListPreference
 import app.revanced.patches.shared.misc.settings.preference.PreferenceScreen
@@ -29,6 +32,7 @@ import app.revanced.patches.youtube.layout.miniplayer.fingerprints.MiniplayerDim
 import app.revanced.patches.youtube.layout.miniplayer.fingerprints.MiniplayerModernAddViewListenerFingerprint
 import app.revanced.patches.youtube.layout.miniplayer.fingerprints.MiniplayerModernCloseButtonFingerprint
 import app.revanced.patches.youtube.layout.miniplayer.fingerprints.MiniplayerModernConstructorFingerprint
+import app.revanced.patches.youtube.layout.miniplayer.fingerprints.MiniplayerModernEnabledFingerprint
 import app.revanced.patches.youtube.layout.miniplayer.fingerprints.MiniplayerModernExpandButtonFingerprint
 import app.revanced.patches.youtube.layout.miniplayer.fingerprints.MiniplayerModernExpandCloseDrawablesFingerprint
 import app.revanced.patches.youtube.layout.miniplayer.fingerprints.MiniplayerModernForwardButtonFingerprint
@@ -47,7 +51,6 @@ import app.revanced.util.findOpcodeIndicesReversed
 import app.revanced.util.getReference
 import app.revanced.util.indexOfFirstInstructionOrThrow
 import app.revanced.util.indexOfFirstWideLiteralInstructionValueOrThrow
-import app.revanced.util.patch.LiteralValueFingerprint
 import app.revanced.util.resultOrThrow
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
@@ -61,11 +64,11 @@ import com.android.tools.smali.dexlib2.iface.reference.TypeReference
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
 
-// YT uses "Miniplayer" without a space between 'mini' and 'player: https://support.google.com/youtube/answer/9162927.
+// YT uses "Miniplayer" without a space between 'mini' and 'player': https://support.google.com/youtube/answer/9162927.
 @Patch(
     name = "Miniplayer",
-    description = "Adds options to change the in app minimized player, " +
-            "and if patching target 19.16+ adds options to use modern miniplayers.",
+    description = "Adds options to change the in app minimized player. " +
+            "Patching target 19.16+ adds modern miniplayers, and 19.28+ offers the most customization",
     dependencies = [
         IntegrationsPatch::class,
         SettingsPatch::class,
@@ -96,11 +99,23 @@ import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
                 "19.11.43",
                 "19.12.41",
                 "19.13.37",
-                // 19.14 is left out, as it has incomplete miniplayer code and missing some UI resources.
-                // It's simpler to not bother with supporting this single old version.
-                // 19.15 has a different code for handling sub title texts,
-                // and also probably not worth making changes just to support this single old version.
-                "19.16.39" // Earliest supported version with modern miniplayers.
+                // 19.14.43 // Incomplete code for modern miniplayers.
+                // 19.15.36 // Different code for handling sub title texts and not worth supporting.
+                "19.16.39", // First with modern miniplayers.
+                "19.17.41",
+                "19.18.41",
+                "19.19.39", // Last bug free version with smaller Modern 1 miniplayer.
+                // 19.20.35 // Cannot swipe to expand.
+                // 19.21.40 // Cannot swipe to expand.
+                // 19.22.43 // Cannot swipe to expand.
+                // 19.23.40 // First with Modern 1 drag and drop, Cannot swipe to expand.
+                // 19.24.45 // First with larger Modern 1, Cannot swipe to expand.
+                "19.25.37", // First with double tap, last with skip forward/back buttons. Screen flickers when swiping to expand Modern 1.
+                // 19.26.42 // Modern 1 Pause/play button are always hidden. Unusable.
+                "19.28.42", // First with custom miniplayer size, screen flickers when swiping to maximize Modern 1.
+                "19.29.42", // Screen flickers when swiping to maximize Modern 1.
+                "19.30.39", // Screen flickers when swiping to maximize Modern 1.
+                // 19.31.36 // All Modern 1 buttons are missing. Unusable.
             ]
         )
     ]
@@ -111,6 +126,7 @@ object MiniplayerPatch : BytecodePatch(
         MiniplayerDimensionsCalculatorParentFingerprint,
         MiniplayerResponseModelSizeCheckFingerprint,
         MiniplayerOverrideFingerprint,
+        MiniplayerModernEnabledFingerprint,
         MiniplayerModernConstructorFingerprint,
         MiniplayerModernViewParentFingerprint,
         YouTubePlayerOverlaysLayoutFingerprint
@@ -121,38 +137,41 @@ object MiniplayerPatch : BytecodePatch(
     override fun execute(context: BytecodeContext) {
         AddResourcesPatch(this::class)
 
-        // Modern mini player is only present and functional in 19.15+.
-        // Resource is not present in older versions. Using it to determine, if patching an old version.
-        val isPatchingOldVersion = ytOutlinePictureInPictureWhite24 < 0
+        val preferences = mutableSetOf<BasePreference>()
+        if (!YouTubeVersionCheck.is_19_16_or_greater) {
+            preferences += ListPreference(
+                "revanced_miniplayer_type",
+                summaryKey = null,
+                entriesKey = "revanced_miniplayer_type_legacy_entries",
+                entryValuesKey = "revanced_miniplayer_type_legacy_entry_values"
+            )
+        } else {
+            preferences += ListPreference(
+                "revanced_miniplayer_type",
+                summaryKey = null,
+                entriesKey = "revanced_miniplayer_type_19_16_entries",
+                entryValuesKey = "revanced_miniplayer_type_19_16_entry_values"
+            )
+            if (YouTubeVersionCheck.is_19_25_or_greater) {
+                preferences += SwitchPreference("revanced_miniplayer_enable_double_tap_action")
+                preferences += SwitchPreference("revanced_miniplayer_enable_drag_and_drop")
+            }
+            preferences += SwitchPreference("revanced_miniplayer_hide_expand_close")
+            if (!YouTubeVersionCheck.is_19_26_or_greater) {
+                preferences += SwitchPreference("revanced_miniplayer_hide_rewind_forward")
+            }
+            preferences += SwitchPreference("revanced_miniplayer_hide_subtext")
+            if (YouTubeVersionCheck.is_19_26_or_greater) {
+                preferences += TextPreference("revanced_miniplayer_width_dip", inputType = InputType.NUMBER)
+            }
+            preferences += TextPreference("revanced_miniplayer_opacity", inputType = InputType.NUMBER)
+        }
 
         SettingsPatch.PreferenceScreen.PLAYER.addPreferences(
             PreferenceScreen(
                 key = "revanced_miniplayer_screen",
                 sorting = Sorting.UNSORTED,
-                preferences =
-                if (isPatchingOldVersion) {
-                    setOf(
-                        ListPreference(
-                            "revanced_miniplayer_type",
-                            summaryKey = null,
-                            entriesKey = "revanced_miniplayer_type_legacy_entries",
-                            entryValuesKey = "revanced_miniplayer_type_legacy_entry_values"
-                        )
-                    )
-                } else {
-                    setOf(
-                        ListPreference(
-                            "revanced_miniplayer_type",
-                            summaryKey = null,
-                            entriesKey = "revanced_miniplayer_type_19_15_entries",
-                            entryValuesKey = "revanced_miniplayer_type_19_15_entry_values"
-                        ),
-                        SwitchPreference("revanced_miniplayer_hide_expand_close"),
-                        SwitchPreference("revanced_miniplayer_hide_subtext"),
-                        SwitchPreference("revanced_miniplayer_hide_rewind_forward"),
-                        TextPreference("revanced_miniplayer_opacity", inputType = InputType.NUMBER)
-                    )
-                }
+                preferences = preferences
             )
         )
 
@@ -188,7 +207,7 @@ object MiniplayerPatch : BytecodePatch(
             it.mutableMethod.insertLegacyTabletMiniplayerOverride(it.scanResult.patternScanResult!!.endIndex)
         }
 
-        if (isPatchingOldVersion) {
+        if (!YouTubeVersionCheck.is_19_16_or_greater) {
             // Return here, as patch below is only intended for new versions of the app.
             return
         }
@@ -212,40 +231,104 @@ object MiniplayerPatch : BytecodePatch(
             }
         }
 
-        // endregion
-
-        // region Fix 19.16 using mixed up drawables for tablet modern.
-        // YT fixed this mistake in 19.17.
-        // Fix this, by swapping the drawable resource values with each other.
-
-        MiniplayerModernExpandCloseDrawablesFingerprint.apply {
-            resolve(
-                context,
-                MiniplayerModernViewParentFingerprint.resultOrThrow().classDef
+        if (YouTubeVersionCheck.is_19_23_or_greater) {
+            MiniplayerModernConstructorFingerprint.insertLiteralValueBooleanOverride(
+                MiniplayerModernConstructorFingerprint.DRAG_DROP_ENABLED_FEATURE_KEY_LITERAL,
+                "enableMiniplayerDragAndDrop"
             )
-        }.resultOrThrow().mutableMethod.apply {
-            listOf(
-                ytOutlinePictureInPictureWhite24 to ytOutlineXWhite24,
-                ytOutlineXWhite24 to ytOutlinePictureInPictureWhite24,
-            ).forEach { (originalResource, replacementResource) ->
-                val imageResourceIndex = indexOfFirstWideLiteralInstructionValueOrThrow(originalResource)
-                val register = getInstruction<OneRegisterInstruction>(imageResourceIndex).registerA
+        }
 
-                replaceInstruction(imageResourceIndex, "const v$register, $replacementResource")
+        if (YouTubeVersionCheck.is_19_25_or_greater) {
+            MiniplayerModernEnabledFingerprint.insertLiteralValueBooleanOverride(
+                MiniplayerModernEnabledFingerprint.MODERN_MINIPLAYER_ENABLED_FEATURE_KEY_LITERAL,
+                "getModernMiniplayerOverride"
+            )
+
+            MiniplayerModernConstructorFingerprint.insertLiteralValueBooleanOverride(
+                MiniplayerModernConstructorFingerprint.MODERN_MINIPLAYER_ENABLED_FEATURE_KEY_LITERAL,
+                "getModernMiniplayerOverride"
+            )
+
+            MiniplayerModernConstructorFingerprint.insertLiteralValueBooleanOverride(
+                MiniplayerModernConstructorFingerprint.DOUBLE_TAP_ENABLED_FEATURE_KEY_LITERAL,
+                "enableMiniplayerDoubleTapAction"
+            )
+        }
+
+        if (YouTubeVersionCheck.is_19_26_or_greater) {
+            MiniplayerModernConstructorFingerprint.resultOrThrow().mutableMethod.apply {
+                val literalIndex = indexOfFirstWideLiteralInstructionValueOrThrow(
+                    MiniplayerModernConstructorFingerprint.MINIPLAYER_SIZE_FEATURE_KEY_LITERAL
+                )
+                val targetIndex = indexOfFirstInstructionOrThrow(literalIndex) {
+                    opcode == Opcode.LONG_TO_INT
+                }
+                val register = getInstruction<OneRegisterInstruction>(targetIndex).registerA
+
+                addInstructions(
+                    targetIndex + 1,
+                    """
+                        invoke-static {v$register}, $INTEGRATIONS_CLASS_DESCRIPTOR->setMiniplayerSize(I)I
+                        move-result v$register
+                    """
+                )
             }
         }
 
         // endregion
 
+        // region Fix 19.16 using mixed up drawables for tablet modern.
+        // YT fixed this mistake in 19.17.
+        // Fix this, by swapping the drawable resource values with each other.
+        if (ytOutlinePictureInPictureWhite24 >= 0) {
+            MiniplayerModernExpandCloseDrawablesFingerprint.apply {
+                resolve(
+                    context,
+                    MiniplayerModernViewParentFingerprint.resultOrThrow().classDef
+                )
+            }.resultOrThrow().mutableMethod.apply {
+                listOf(
+                    ytOutlinePictureInPictureWhite24 to ytOutlineXWhite24,
+                    ytOutlineXWhite24 to ytOutlinePictureInPictureWhite24,
+                ).forEach { (originalResource, replacementResource) ->
+                    val imageResourceIndex = indexOfFirstWideLiteralInstructionValueOrThrow(originalResource)
+                    val register = getInstruction<OneRegisterInstruction>(imageResourceIndex).registerA
 
-        // region Add hooks to hide tablet modern miniplayer buttons.
+                    replaceInstruction(imageResourceIndex, "const v$register, $replacementResource")
+                }
+            }
+        }
+
+        // endregion
+
+        // region Add hooks to hide modern miniplayer buttons.
 
         listOf(
-            Triple(MiniplayerModernExpandButtonFingerprint, modernMiniplayerExpand,"hideMiniplayerExpandClose"),
-            Triple(MiniplayerModernCloseButtonFingerprint, modernMiniplayerClose, "hideMiniplayerExpandClose"),
-            Triple(MiniplayerModernRewindButtonFingerprint, modernMiniplayerRewindButton, "hideMiniplayerRewindForward"),
-            Triple(MiniplayerModernForwardButtonFingerprint, modernMiniplayerForwardButton, "hideMiniplayerRewindForward"),
-            Triple(MiniplayerModernOverlayViewFingerprint, scrimOverlay, "adjustMiniplayerOpacity")
+            Triple(
+                MiniplayerModernExpandButtonFingerprint,
+                modernMiniplayerExpand,
+                "hideMiniplayerExpandClose"
+            ),
+            Triple(
+                MiniplayerModernCloseButtonFingerprint,
+                modernMiniplayerClose,
+                "hideMiniplayerExpandClose"
+            ),
+            Triple(
+                MiniplayerModernRewindButtonFingerprint,
+                modernMiniplayerRewindButton,
+                "hideMiniplayerRewindForward"
+            ),
+            Triple(
+                MiniplayerModernForwardButtonFingerprint,
+                modernMiniplayerForwardButton,
+                "hideMiniplayerRewindForward"
+            ),
+            Triple(
+                MiniplayerModernOverlayViewFingerprint,
+                scrimOverlay,
+                "adjustMiniplayerOpacity"
+            )
         ).forEach { (fingerprint, literalValue, methodName) ->
             fingerprint.resolve(
                 context,
@@ -275,6 +358,9 @@ object MiniplayerPatch : BytecodePatch(
         // Modern 2 uses the same overlay controls as the regular video player,
         // and the overlay views are added at runtime.
         // Add a hook to the overlay class, and pass the added views to integrations.
+        //
+        // NOTE: Modern 2 uses the same video UI as the regular player except resized to smaller.
+        // This patch code could be used to hide other player overlays that do not use Litho.
         YouTubePlayerOverlaysLayoutFingerprint.resultOrThrow().mutableClass.methods.add(
             ImmutableMethod(
                 YOUTUBE_PLAYER_OVERLAYS_LAYOUT_CLASS_NAME,
@@ -319,6 +405,20 @@ object MiniplayerPatch : BytecodePatch(
         insertBooleanOverride(index, "getModernMiniplayerOverride")
     }
 
+    private fun MethodFingerprint.insertLiteralValueBooleanOverride(
+        literal: Long,
+        integrationsMethod: String
+    ) {
+        resultOrThrow().mutableMethod.apply {
+            val literalIndex = indexOfFirstWideLiteralInstructionValueOrThrow(literal)
+            val targetIndex = indexOfFirstInstructionOrThrow(literalIndex) {
+                opcode == Opcode.MOVE_RESULT
+            }
+
+            insertBooleanOverride(targetIndex + 1, integrationsMethod)
+        }
+    }
+
     private fun MutableMethod.insertBooleanOverride(index: Int, methodName: String) {
         val register = getInstruction<OneRegisterInstruction>(index).registerA
         addInstructions(
@@ -348,7 +448,7 @@ object MiniplayerPatch : BytecodePatch(
         removeInstruction(iPutIndex)
     }
 
-    private fun LiteralValueFingerprint.hookInflatedView(
+    private fun MethodFingerprint.hookInflatedView(
         literalValue: Long,
         hookedClassType: String,
         integrationsMethodName: String,

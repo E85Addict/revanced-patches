@@ -60,6 +60,19 @@ import com.android.tools.smali.dexlib2.iface.reference.MethodReference
                 "19.14.43",
                 "19.15.36",
                 "19.16.39",
+                "19.17.41",
+                "19.18.41",
+                "19.19.39",
+                "19.20.35",
+                "19.21.40",
+                "19.22.43",
+                "19.23.40",
+                "19.24.45",
+                "19.25.37", 
+                "19.26.42",
+                "19.28.42",
+                "19.29.42",
+                "19.30.39",
             ],
         ),
     ],
@@ -70,6 +83,7 @@ object HideShortsComponentsPatch : BytecodePatch(
         CreateShortsButtonsFingerprint,
         ReelConstructorFingerprint,
         BottomNavigationBarFingerprint,
+        BottomNavigationBarNewFingerprint,
         RenderBottomNavigationBarParentFingerprint,
         SetPivotBarVisibilityParentFingerprint,
     ),
@@ -145,7 +159,12 @@ object HideShortsComponentsPatch : BytecodePatch(
         } ?: throw RenderBottomNavigationBarParentFingerprint.exception
 
         // Required to prevent a black bar from appearing at the bottom of the screen.
-        BottomNavigationBarFingerprint.result?.let {
+        // BottomNavigationBar class deprecated on 19.29+.
+        val bottomNavigationBarResult =
+             BottomNavigationBarFingerprint.result ?: BottomNavigationBarNewFingerprint.result
+                 ?: throw BottomNavigationBarFingerprint.exception
+
+        bottomNavigationBarResult.let {
             it.mutableMethod.apply {
                 val moveResultIndex = it.scanResult.patternScanResult!!.startIndex + 2
                 val viewRegister = getInstruction<OneRegisterInstruction>(moveResultIndex).registerA
@@ -157,7 +176,7 @@ object HideShortsComponentsPatch : BytecodePatch(
                         "hideNavigationBar(Landroid/view/View;)Landroid/view/View;",
                 )
             }
-        } ?: throw BottomNavigationBarFingerprint.exception
+        }
 
         // endregion
     }
