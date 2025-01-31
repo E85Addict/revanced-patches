@@ -14,7 +14,6 @@
         ]
       }
     ],
-    "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
     "gradle-semantic-release-plugin",
     [
@@ -24,7 +23,7 @@
           "CHANGELOG.md",
           "gradle.properties"
         ],
-        "message": "chore: Release v${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+        "message": "chore: Release v${nextRelease.version} [skip ci]\n\n'Personal Logo && Add upstream sync'"
       }
     ],
     [
