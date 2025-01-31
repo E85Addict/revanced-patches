@@ -35,7 +35,7 @@ private val variants = arrayOf("light", "dark")
 val changeHeaderPatch = resourcePatch(
     name = "Change header",
     description = "Applies a custom header in the top left corner within the app. Defaults to the ReVanced header.",
-    use = false,
+    use = true,
 ) {
     dependsOn(versionCheckPatch)
 
@@ -52,7 +52,7 @@ val changeHeaderPatch = resourcePatch(
 
     val header by stringOption(
         key = "header",
-        default = REVANCED_BORDERLESS_HEADER_OPTION,
+        default = REVANCED_HEADER_OPTION,
         values = mapOf(
             "YouTube" to HEADER_OPTION,
             "YouTube Premium" to PREMIUM_HEADER_OPTION,
