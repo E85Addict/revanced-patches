@@ -1,9 +1,7 @@
-package app.revanced.patches.youtube.layout.branding
+package app.revanced.patches.music.layout.branding
 
 import app.revanced.patcher.patch.resourcePatch
 import app.revanced.patcher.patch.stringOption
-import app.revanced.patches.youtube.misc.playservice.is_19_34_or_greater
-import app.revanced.patches.youtube.misc.playservice.versionCheckPatch
 import app.revanced.util.ResourceGroup
 import app.revanced.util.Utils.trimIndentMultiline
 import app.revanced.util.copyResources
@@ -11,18 +9,18 @@ import java.io.File
 import java.nio.file.Files
 
 private const val REVANCED_ICON = "ReVanced*Logo" // Can never be a valid path.
-private const val APP_NAME = "YouTube"
+private const val APP_NAME = "YT Music"
 
 private val iconResourceFileNames = arrayOf(
-    "adaptiveproduct_youtube_background_color_108",
-    "adaptiveproduct_youtube_foreground_color_108",
+    "adaptiveproduct_youtube_music_background_color_108",
+    "adaptiveproduct_youtube_music_foreground_color_108",
     "ic_launcher",
     "ic_launcher_round",
 ).map { "$it.png" }.toTypedArray()
 
 private val iconResourceFileNamesNew = mapOf(
-    "adaptiveproduct_youtube_foreground_color_108" to "adaptiveproduct_youtube_2024_q4_foreground_color_108",
-    "adaptiveproduct_youtube_background_color_108" to "adaptiveproduct_youtube_2024_q4_background_color_108",
+    "adaptiveproduct_youtube_music_foreground_color_108" to "adaptiveproduct_youtube_music_2024_q4_foreground_color_108",
+    "adaptiveproduct_youtube_music_background_color_108" to "adaptiveproduct_youtube_music_2024_q4_background_color_108",
 )
 
 private val mipmapDirectories = arrayOf(
@@ -35,29 +33,20 @@ private val mipmapDirectories = arrayOf(
 
 @Suppress("unused")
 val customBrandingPatch = resourcePatch(
-    name = "Custom branding",
-    description = "Applies a custom app name and icon. Defaults to \"YouTube ReVanced\" and the ReVanced logo.",
+    name = "Custom Music branding",
+    description = "Applies a custom app name and icon. Defaults to \"YT Music ReVanced\" and the ReVanced logo.",
     use = true,
 ) {
-    dependsOn(versionCheckPatch)
-
-    compatibleWith(
-        "com.google.android.youtube"(
-            "19.34.42",
-            "20.07.39",
-            "20.13.41",
-            "20.14.43",
-        )
-    )
+    compatibleWith("com.google.android.apps.youtube.music")
 
     val appName by stringOption(
         key = "appName",
         default = APP_NAME,
         values = mapOf(
-            "YouTube ReVanced" to APP_NAME,
-            "YT ReVanced" to "YT ReVanced",
-            "YT" to "YT",
-            "YouTube" to "YouTube",
+            "YouTube Music ReVanced" to APP_NAME,
+            "YTM ReVanced" to "YTM ReVanced",
+            "YTM" to "YTM",
+            "YouTube Music" to "YouTube Music",
         ),
         title = "App name",
         description = "The name of the app.",
@@ -106,22 +95,20 @@ val customBrandingPatch = resourcePatch(
                         }
                     }
                 } else {
-                    resourceGroups.forEach { copyResources("branding/youtube", it) }
+                    resourceGroups.forEach { copyResources("branding/music", it) }
                 }
             }
 
-            if (is_19_34_or_greater) {
-                val resourceDirectory = get("res")
+            val resourceDirectory = get("res")
 
-                mipmapDirectories.forEach { directory ->
-                    val targetDirectory = resourceDirectory.resolve(directory)
+            mipmapDirectories.forEach { directory ->
+                val targetDirectory = resourceDirectory.resolve(directory)
 
-                    iconResourceFileNamesNew.forEach { (old, new) ->
-                        val oldFile = targetDirectory.resolve("$old.png")
-                        val newFile = targetDirectory.resolve("$new.png")
+                iconResourceFileNamesNew.forEach { (old, new) ->
+                    val oldFile = targetDirectory.resolve("$old.png")
+                    val newFile = targetDirectory.resolve("$new.png")
 
-                        Files.write(newFile.toPath(), oldFile.readBytes())
-                    }
+                    Files.write(newFile.toPath(), oldFile.readBytes())
                 }
             }
         }
