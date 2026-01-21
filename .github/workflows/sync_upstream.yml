@@ -1,0 +1,52 @@
+name: Sync upstream
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */8 * * *"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: sync
+        id: sync
+        shell: bash
+        run: |
+          git config --global user.name 'E85Addict'
+          git config --global user.email '77761710+E85Addict@users.noreply.github.com'
+          if [[ $(git log | grep Author | head -1) == *"semantic"* ]]; then
+            git reset --hard HEAD~1
+          fi
+          T=$(git tag --sort=creatordate | tail -1)
+          git remote add upstream https://github.com/revanced/revanced-patches
+          git tag -d $(git tag -l)
+          git fetch upstream --tags -f
+          LatestRemoteTag=$(curl -s https://api.github.com/repos/revanced/revanced-patches/releases/latest | jq -r '.tag_name')
+          C=$(git rev-list --left-right --count origin/main...remotes/upstream/main | awk '{print$2}')
+          echo "Ahead $C commits."
+
+          if [ "$C" -gt 0 ]; then
+            echo "Rebasing"
+            # git push origin --delete $T
+            git rebase -X ours upstream/main
+            git push --tags -f
+            git push origin --delete $LatestRemoteTag
+            git push -f
+          else
+            echo "in sync"
+          fi
+
+      - name: Delete old workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 0
+          keep_minimum_runs: 10
